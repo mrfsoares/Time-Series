@@ -115,7 +115,7 @@ summary(ur.df(ddcred, type=c("trend"),lags=13))
 summary(ur.df(ddcred, type=c("drift"),lags=13))
 summary(ur.df(ddcred, type=c("none"),lags=13))
 
-# até o 13 lag foi significativo
+
 
 #Se t < ?? rejeitamos a hipótese nula
 # Conclui-se que a série é I(1)!
@@ -144,12 +144,18 @@ summary(ur.kpss(ddcred, type="tau", lags="short"))
 
 if(!require(forecast)){install.packages("forecast")&require(forecast);require(forecast)}
 if(!require(lmtest)){install.packages("lmtest")&require(lmtest);require(lmtest)}
-# MODELOS CANDIDATOS:
-# SARIMA(2,1,2)(1,1,1)
-# SARIMA(1,1,2)(1,1,1)
-# SARIMA(2,1,1)(1,1,1)
-# SARIMA(1,1,1)(1,1,1)
 
+# MODELOS CANDIDATOS:
+# SARIMA(2,1,2)(2,1,1)
+# SARIMA(1,1,2)(2,1,1)
+# SARIMA(0,1,2)(2,1,1)
+# SARIMA(2,1,1)(2,1,1)
+# SARIMA(2,1,0)(2,1,1)
+# SARIMA(2,1,2)(2,1,0)
+# SARIMA(1,1,2)(2,1,0)
+# SARIMA(0,1,2)(2,1,0)
+# SARIMA(2,1,1)(2,1,0)
+# SARIMA(2,1,0)(2,1,0)
 
 
 # Criterios de informacao
