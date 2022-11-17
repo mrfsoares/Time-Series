@@ -123,18 +123,18 @@ summary(ur.df(ddcred, type=c("none"),lags=13))
 
 
 ## ____Teste de PP (H0: não estacionário [possui raíz unitária])
-### Em nível
-PP.test(cred)
-
 ### Em primeira diferença
 PP.test(dcred)
 
+### Em primeira diferença e diferenciação sazonal
+PP.test(ddcred)
+
 
 ## ____ Teste KPSS (H0: estacionário [não possui raíz unitária])
-### Em nível
-summary(ur.kpss(cred, type="tau", lags="short"))
-### Em primeira diferença
+### Em primeira diferença 
 summary(ur.kpss(dcred, type="tau", lags="short"))
+### Em primeira diferença e diferenciação sazonal
+summary(ur.kpss(ddcred, type="tau", lags="short"))
 
 
 # Obs.: há componente sazonal. Estimar SARIMA
