@@ -7,11 +7,10 @@ setwd(choose.dir())
 
 # ETAPA 1. Análise gráfica -----------------------------------------------------
 # ------------------------------------------------------------------------------
-if(!require(GetBCBData)){install.packages("GetBCBData")&
-    require(GetBCBData);require(GetBCBData)}
-
-if(!require(tseries)){install.packages("tseries")&
-    require(tseries);require(tseries)}
+if(!require(GetBCBData)){install.packages("GetBCBData")&require(GetBCBData);require(GetBCBData)}
+if(!require(tseries)){install.packages("tseries")&require(tseries);require(tseries)}
+if(!require(forecast)){install.packages("forecast")&require(forecast);require(forecast)}
+if(!require(lmtest)){install.packages("lmtest")&require(lmtest);require(lmtest)}
 
 ### 1. 
 # Leitura dos dados
@@ -31,6 +30,7 @@ plot.ts(cred,
         main=main, 
         ylab='R$ (milhões)', xlab=NULL, sub = 'Fonte: BCB')
 grid()
+
 
 # Tomando LOG
 main = 'Log das concessões de crédito mensal para pessoas físicas no Brasil'
@@ -58,8 +58,6 @@ acf(cred,lag.max=36,main='FAC',
 pacf(cred,lag.max=36,main='FACP',
      xlab='defasagem',ylab='autocorrelações')
 
-# Os dados não são estacionários:::impossível estimar todos os momentos da série trivialmente
-
 
 # HAJA VISTA QUE A SÉRIE É NÃO ESTACIONÁRIO, VAMOS ESTACIONARIZA-LA
 par(mfrow=c(1,1))
@@ -72,16 +70,16 @@ grid()
 
 # ao que tudo indica, tomar a 1 diferença resolve problema de não estac.
 
-
 ## FAC e FACP
 par(mfrow=c(1,2))
 acf(diff(cred), main='FAC: Primeira Diferença')
 pacf(diff(cred), main='FACP: Primeira Diferença')
 par(mfrow = c(1,1))
 
-## problema com spikes: sazonalidade. aplicar transformação sazonal
-dcred <- diff(cred)
-ddcred <- diff(dcred, lag = 12)
+## observa-se problema com spikes: sazonalidade. aplicar transformação sazonal
+
+dcred <- diff(cred) # primeira diferença
+ddcred <- diff(dcred, lag = 12) # transformação sazonal
 
 par(mfrow=c(1,1))
 main = '[Primeira Diferença e Diferenciação Sazonal]\n Log das concessões de crédito mensal para pessoas físicas no Brasil'
@@ -98,27 +96,33 @@ pacf(ddcred, main='FACP: Primeira Diferença e Diferenciação Sazonal')
 par(mfrow = c(1,1))
 
 
-# Testes de raiz unitária -------------------------------------------------------------------------------------
+# Etapa 2. Testes de raiz unitária ---------------------------------------------
+# ------------------------------------------------------------------------------
 
-## Desemprego ----------------------------------------------------------------------
 ## ____ Teste ADF (H0: não estacionário [possui raíz unitária])
 
 if(!require(urca)){install.packages("urca")&require(urca);require(urca)}
 
 ### Em primeira diferença 
-summary(ur.df(dcred, type=c("trend"),lags=13))
-summary(ur.df(dcred, type=c("drift"),lags=13))
-summary(ur.df(dcred, type=c("none"),lags=13))
+summary(ur.df(dcred, type=c("trend"),lags=13,
+        selectlags = "BIC"))  # não rejeita H0 . há pelo menos I(1)
+summary(ur.df(dcred, type=c("drift"),lags=13,
+        selectlags = "BIC"))  # não rejeita H0 . há pelo menos I(1)
+summary(ur.df(dcred, type=c("none"),lags=13,
+        selectlags = "BIC"))  # não rejeita H0 . há pelo menos I(1)
 
 ### Em primeira diferença e diferenciação sazonal
-summary(ur.df(ddcred, type=c("trend"),lags=13))
-summary(ur.df(ddcred, type=c("drift"),lags=13))
-summary(ur.df(ddcred, type=c("none"),lags=13))
+summary(ur.df(ddcred, type=c("trend"),lags=13,
+              selectlags = "BIC"))  # rejeita H0 . estacionáraia
+summary(ur.df(ddcred, type=c("drift"),lags=13,
+              selectlags = "BIC"))   # rejeita H0 . estacionáraia
+summary(ur.df(ddcred, type=c("none"),lags=13,
+              selectlags = "BIC")) # rejeita H0 . estacionáraia
 
 
-
-#Se t < ?? rejeitamos a hipótese nula
-# Conclui-se que a série é I(1)!
+# Se t < ?? rejeitamos H0
+# Conclui-se que a série em primeira diferença e diferenciação sazonal 
+# é estacionária!
 
 
 
@@ -130,20 +134,30 @@ PP.test(dcred)
 PP.test(ddcred)
 
 
+# Se DF < p-value rejeitamos H0
+# Conclui-se que a série em primeira diferença e diferenciação sazonal 
+# é estacionária!
+
+
+
 ## ____ Teste KPSS (H0: estacionário [não possui raíz unitária])
 ### Em primeira diferença 
 summary(ur.kpss(dcred, type="tau", lags="short"))
+
 ### Em primeira diferença e diferenciação sazonal
 summary(ur.kpss(ddcred, type="tau", lags="short"))
 
 
-# Obs.: há componente sazonal. Estimar SARIMA
+# T > critical values: rejeita H0 [não estacionaria]
+# Conclui-se que a série em primeira diferença e diferenciação sazonal 
+# é estacionária!
+
+
 
 # ETAPA 3. Estimação -----------------------------------------------------------
 # ------------------------------------------------------------------------------
 
-if(!require(forecast)){install.packages("forecast")&require(forecast);require(forecast)}
-if(!require(lmtest)){install.packages("lmtest")&require(lmtest);require(lmtest)}
+# Obs.: há componente sazonal. Estimar SARIMA
 
 # MODELOS CANDIDATOS:
 # SARIMA(2,1,2)(2,1,1)
