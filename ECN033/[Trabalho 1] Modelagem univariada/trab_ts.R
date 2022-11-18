@@ -11,8 +11,9 @@ if(!require(GetBCBData)){install.packages("GetBCBData")&require(GetBCBData);requ
 if(!require(tseries)){install.packages("tseries")&require(tseries);require(tseries)}
 if(!require(forecast)){install.packages("forecast")&require(forecast);require(forecast)}
 if(!require(lmtest)){install.packages("lmtest")&require(lmtest);require(lmtest)}
+if(!require(ggplot2)){install.packages("ggplot2")&require(ggplot2);require(ggplot2)}
 
-### 1. 
+
 # Leitura dos dados
 ## Concessões de crédito - Pessoas físicas - Total
 cred <- ts(
@@ -32,7 +33,7 @@ plot.ts(cred,
 grid()
 
 
-# Tomando LOG
+## Tomando LOG
 main = 'Log das concessões de crédito mensal para pessoas físicas no Brasil'
 cred <- log(cred)
 plot.ts(cred,
@@ -45,7 +46,6 @@ grid()
 par(mfrow=c(1,1))
 plot(decompose(cred))
 grid()
-
 
 # Os dados não são estacionários:::impossível estimar todos os momentos da série trivialmente
 # Presença de tendência e sazonalidade --- SARIMA()
@@ -77,6 +77,7 @@ pacf(diff(cred), main='FACP: Primeira Diferença')
 par(mfrow = c(1,1))
 
 ## observa-se problema com spikes: sazonalidade. aplicar transformação sazonal
+
 
 dcred <- diff(cred) # primeira diferença
 ddcred <- diff(dcred, lag = 12) # transformação sazonal
@@ -133,7 +134,6 @@ PP.test(dcred)
 ### Em primeira diferença e diferenciação sazonal
 PP.test(ddcred)
 
-
 # Se DF < p-value rejeitamos H0
 # Conclui-se que a série em primeira diferença e diferenciação sazonal 
 # é estacionária!
@@ -161,7 +161,6 @@ summary(ur.kpss(ddcred, type="tau", lags="short"))
 
 # MODELOS CANDIDATOS:
 # SARIMA(2,1,2)(2,1,1)
-# SARIMA(1,1,2)(2,1,1)
 # SARIMA(0,1,2)(2,1,1)
 # SARIMA(2,1,1)(2,1,1)
 # SARIMA(2,1,0)(2,1,1)
@@ -172,155 +171,92 @@ summary(ur.kpss(ddcred, type="tau", lags="short"))
 # SARIMA(2,1,0)(2,1,0)
 
 
+# Candidatos a melhor modelo SARIMA 
+fit0 = coeftest(Arima(cred, order=c(2,1,2), seasonal=list(order=c(2,1,1), period=12, lambda = 0))); fit0 
+fit1 = coeftest(Arima(cred, order=c(0,1,2), seasonal=list(order=c(2,1,1), period=12, lambda = 0))); fit1 
+fit2 = coeftest(Arima(cred, order=c(2,1,1), seasonal=list(order=c(2,1,1), period=12, lambda = 0))); fit2  
+fit3 = coeftest(Arima(cred, order=c(2,1,0), seasonal=list(order=c(2,1,1), period=12, lambda = 0))); fit3 
+fit4 = coeftest(Arima(cred, order=c(2,1,2), seasonal=list(order=c(2,1,0), period=12, lambda = 0))); fit4 
+fit5 = coeftest(Arima(cred, order=c(1,1,2), seasonal=list(order=c(2,1,0), period=12, lambda = 0))); fit5 
+fit6 = coeftest(Arima(cred, order=c(0,1,2), seasonal=list(order=c(2,1,0), period=12, lambda = 0))); fit6 
+fit7 = coeftest(Arima(cred, order=c(2,1,1), seasonal=list(order=c(2,1,0), period=12, lambda = 0))); fit7
+fit8 = coeftest(Arima(cred, order=c(2,1,0), seasonal=list(order=c(4,1,0), period=12, lambda = 0))); fit8
+fit9 = coeftest(auto.arima(cred)); fit9
+
+
 # Criterios de informacao
-mod0 = Arima(ddcred, order=c(2,1,2), seasonal=list(order=c(2,1,1), period=12)); mod0 
-mod1 = Arima(ddcred, order=c(1,1,2), seasonal=list(order=c(2,1,1), period=12)); mod1 
-mod2 = Arima(ddcred, order=c(0,1,2), seasonal=list(order=c(2,1,1), period=12)); mod2  
-mod3 = Arima(ddcred, order=c(2,1,1), seasonal=list(order=c(2,1,1), period=12)); mod3 
-mod4 = Arima(ddcred, order=c(2,1,0), seasonal=list(order=c(2,1,1), period=12)); mod4 
-mod5 = Arima(ddcred, order=c(2,1,2), seasonal=list(order=c(2,1,0), period=12)); mod5 
-mod6 = Arima(ddcred, order=c(1,1,2), seasonal=list(order=c(2,1,0), period=12)); mod6 
-mod7 = Arima(ddcred, order=c(0,1,2), seasonal=list(order=c(2,1,0), period=12)); mod7
-mod8 = Arima(ddcred, order=c(2,1,1), seasonal=list(order=c(2,1,0), period=12)); mod8
-mod9 = Arima(ddcred, order=c(2,1,0), seasonal=list(order=c(2,1,0), period=12)); mod9
-mod10 = auto.arima(ddcred); mod10
+mod0 = Arima(cred, order=c(2,1,2), seasonal=list(order=c(2,1,1), period=12, lambda = 0)); mod0 
+mod1 = Arima(cred, order=c(0,1,2), seasonal=list(order=c(2,1,1), period=12, lambda = 0)); mod1 
+mod2 = Arima(cred, order=c(2,1,1), seasonal=list(order=c(2,1,1), period=12, lambda = 0)); mod2  
+mod3 = Arima(cred, order=c(2,1,0), seasonal=list(order=c(2,1,1), period=12, lambda = 0)); mod3 
+mod4 = Arima(cred, order=c(2,1,2), seasonal=list(order=c(2,1,0), period=12, lambda = 0)); mod4 
+mod5 = Arima(cred, order=c(1,1,2), seasonal=list(order=c(2,1,0), period=12, lambda = 0)); mod5 
+mod6 = Arima(cred, order=c(0,1,2), seasonal=list(order=c(2,1,0), period=12, lambda = 0)); mod6 
+mod7 = Arima(cred, order=c(2,1,1), seasonal=list(order=c(2,1,0), period=12, lambda = 0)); mod7
+mod8 = Arima(cred, order=c(2,1,0), seasonal=list(order=c(4,1,0), period=12, lambda = 0)); mod8
+mod9 = auto.arima(cred); mod9
 
 
-AIC(mod0, mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10) 
-BIC(mod0, mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10) 
+AIC(mod0, mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9) 
+BIC(mod0, mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9) 
 
-# Vamos avaliar os modelos 3 e 10, pois foram os que apresentaram menor AIC e BIC.
+# Se avaliará o 8, pois foram os que apresentou menor AIC e BIC.
 
 
-## PARTE 3 #################################################################################
-#  VERIFICAO DO MODELO AJUSTADO                                                         #                                   
-###########################################################################################
-# Analisamos os residuos
+
+# ETAPA 4. Verificação do modelo ajustado --------------------------------------
+# ------------------------------------------------------------------------------
+
+# Analisando os residuos
 
 # Testes dos residuos
 ## Estabilidade
 # Plots
-# MOD 3
-autoplot(mod3, main="Modelo 3")
-
-# MOD 10
-autoplot(mod10, main="Modelo 10")
-
+# MOD 8
 par(mfrow = c(1,1))
+autoplot(mod8, main="Modelo 8")
+
 
 ## Autocorrelacao                   Teste de Ljung-Box| H0: os residuos sao iid
-# MOD 3
-tsdiag(mod3)
-res3<-residuals(mod3)
-Box.test(res3,lag=12,type="Ljung-Box")
-Box.test(res3,lag=24,type="Ljung-Box")
-Box.test(res3,lag=36,type="Ljung-Box")
-
-# MOD 10
-tsdiag(mod10)
-res10<-residuals(mod10)
-Box.test(res10,lag=12,type="Ljung-Box")
-Box.test(res10,lag=24,type="Ljung-Box")
-Box.test(res10,lag=36,type="Ljung-Box")
-
+# MOD 8
+tsdiag(mod8)
+res8 <- residuals(mod8)
+Box.test(res8,lag=12,type="Ljung-Box")
+Box.test(res8,lag=24,type="Ljung-Box")
+Box.test(res8,lag=36,type="Ljung-Box")
 
 
 ## Normalidade                      Teste de Jarque-Bera| H0: normalidade dos residuos
-# MOD 3
-par(mfrow=c(3,2))
-hist(res3, freq=F, ylab='Densidade', xlab='Residuos', main='Residuos - Modelo 3')
-plot(density(res3, kernel = c("gaussian")), main="Residuos - Modelo 3")   # Funcao de densidade estimada
-qqnorm(res3, ylab='Quantis amostrais', xlab='Quantis teoricos', main='Quantil-Quantil - Modelo 3')
-qqline(res3, col = "red")
-shapiro.test(res3)
-jarque.bera.test(res3)
-
-# MOD 10
-hist(res10, freq=F, ylab='Densidade', xlab='Residuos', main='Residuos - Modelo 10')
-plot(density(res10, kernel = c("gaussian")), main="Residuos - Modelo 10")   # Funcao de densidade estimada
-qqnorm(res10, ylab='Quantis amostrais', xlab='Quantis teoricos', main='Quantil-Quantil - Modelo 10')
-qqline(res10, col = "red")
-shapiro.test(res10)
-jarque.bera.test(res10)
-
+# MOD 8
+par(mfrow=c(1,3))
+hist(res8, freq=F, ylab='Densidade', xlab='Residuos', main='Residuos - Modelo 8')
+plot(density(res8, kernel = c("gaussian")), main="Residuos - Modelo 8")   # Funcao de densidade estimada
+qqnorm(res8, ylab='Quantis amostrais', xlab='Quantis teoricos', main='Quantil-Quantil - Modelo 8')
+qqline(res8, col = "red")
+shapiro.test(res8)
+jarque.bera.test(res8)
 
 
 ## Teste de heteroscedasticidade     Teste ARCH| H0: os residuos nao possuem efeitos auto-regressivos de heteroscedasticidade condicional
 if(!require(FinTS)){install.packages("FinTS")&require(FinTS);require(FinTS)}
 
-ArchTest(mod3$residuals,lags = 12)
-
-ArchTest(mod10$residuals,lags = 12)
-
-## PARTE 4 #################################################################################
-#  PREVISAO                                                                               #                                   
-###########################################################################################
-
-## Testes de Acuracia
-
-# Teste de acuracia: dentro da amostra (amostra inteira como treino)
-# OBS: Escolhemos o modelo que tem os menores desvios (RMSE)
-accuracy(mod3)
-accuracy(mod10) 
-#-------------------------------------------------------------
-## Testes de acuracia: fora da amostra (usando jan/2013 - nov/2015 como teste)
-
-# Definido as series de treino e teste
-m_previsao = 35
-ddcred.test = tail(ddcred, m_previsao)
-ddcred.train = head(ddcred, length(ddcred) - length(ddcred.test))
-
-# Modelo 3
-mod3.train = Arima(ddcred.train, order=c(2,1,1), seasonal=list(order=c(2,1,1), period=12)); mod3.train
-
-fc_mod3.train = forecast(mod3.train, h=length(ddcred.test))
-fc_mod3.train
-par(mfrow=c(1,1))
-plot(fc_mod3.train)
-
-accuracy(fc_mod3.train$mean,ddcred.test)
-
-ddcred_test3 <- ts(data.frame(cbind(fcst=fc_mod3.train$mean,obs=ddcred.test)))
-plot3 <- autoplot(ddcred_test3[,2], series = "Observado") + 
-  autolayer(ddcred_test3[,1], series = "Previsao") +
-  labs(title = "Modelo 3",
-       x = "Periodos",
-       y = "",
-       color = "Previsao")
-plot3
-
-# Modelo 10
-mod10.train = Arima(ddcred.train, order=c(2,0,0), seasonal=list(order=c(2,0,0), period=12)); mod10.train
-
-fc_mod10.train = forecast(mod10.train, h=length(ddcred.test))
-fc_mod10.train
-par(mfrow=c(1,1))
-plot(fc_mod10.train)
-
-accuracy(fc_mod10.train$mean,ddcred.test)
-
-df_test10 <- ts(data.frame(cbind(fcst=fc_mod10.train$mean,obs=ddcred.test)))
-plot10 <- autoplot(df_test10[,2], series = "Observado") + 
-  autolayer(df_test10[,1], series = "Previsao") +
-  labs(title = "Modelo 10",
-       x = "Periodos",
-       y = "",
-       color = "Previsao")
-plot10
+ArchTest(mod8$residuals,lags = 12)
 
 
 
-# Comparativo dos testes de acuracia entre os 2 modelos fora da amostra
-accuracy(fc_mod3.train$mean,ddcred.test) # Novamente apresenta menor RMSE
-accuracy(fc_mod10.train$mean,ddcred.test)
+# ETAPA 4. Previsão ------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
-## Graficos de previsao do melhor modelo
-fc_mod3 = forecast(mod3, h = 12)
+main__ <- 'Previsão das concessões de crédito mensal para pessoas físicas no Brasil'
+main_ <- '\para o ano de 2020 a partir de um ARIMA(2,1,0)(4,1,0)[12]'
+main = paste(main__, main_)
+plot(forecast(object = mod8, h=12, level = 0.95),
+     main=main, ylab='R$ (milhões)')
+grid()
 
-plot(fc_mod3, 
-     main = "Previsao da concessão de crédito",
-     xlab = "Periodo",
-     include = m_previsao, 
-     showgap = F, 
-     fcol = "red",
-     flty = "dashed")
+# graficamente parece ter funcionado bem
+
+
+# Analise de métricas de previsão
+accuracy(mod8)
+
