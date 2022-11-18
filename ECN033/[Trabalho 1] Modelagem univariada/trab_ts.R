@@ -248,7 +248,7 @@ ArchTest(mod8$residuals,lags = 12)
 # ------------------------------------------------------------------------------
 
 main__ <- 'Previsão das concessões de crédito mensal para pessoas físicas no Brasil'
-main_ <- '\para o ano de 2020 a partir de um ARIMA(2,1,0)(4,1,0)[12]'
+main_ <- '\npara o ano de 2020 a partir de um ARIMA(2,1,0)(4,1,0)[12]'
 main = paste(main__, main_)
 plot(forecast(object = mod8, h=12, level = 0.95),
      main=main, ylab='R$ (milhões)')
